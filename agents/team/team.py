@@ -131,7 +131,8 @@ def is_all_members_executed(state: TeamState):
     if len(state["executed_members"]) == len(state["members"]):
         return
 
-def create_team_graph(topic: str, members: List[TeamMember]) -> StateGraph:
+
+def create_team_graph(members: List[TeamMember]) -> StateGraph:
     team_tools_node = ToolNode(tools)
 
     workflow = StateGraph(TeamState)
