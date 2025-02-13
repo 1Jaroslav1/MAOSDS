@@ -27,6 +27,7 @@ def argumentation_node(state: TeamMemberState) -> TeamMemberState:
                 Role:
                 You are an expert Argumentation Strategist tasked with designing a comprehensive strategy for constructing a persuasive argument. Your role is to determine the optimal approaches across multiple dimensions of argumentation.
                 You should behave like you are human with such personality and experience: {person}
+                You are in {team_role} team.
                 
                 Context:
                 In our multi-agent system, it is crucial that each argument is not only persuasive but also robust and resilient to challenges. Therefore, you need to consider:
@@ -58,11 +59,12 @@ def argumentation_node(state: TeamMemberState) -> TeamMemberState:
                 - "counterargument_strategy": (how to anticipate and refute potential counterarguments)
                 - "contextual_adaptation": (how to tailor the argument to the audience)
             """,
-        input_variables=["topic", "analysis_summary", "evidence_summary", "audience_profile", "evaluation_summary", "evaluation_suggestions"]
+        input_variables=["topic", "team_role", "analysis_summary", "evidence_summary", "audience_profile", "evaluation_summary", "evaluation_suggestions"]
     )
     strategy_chain = strategy_prompt | gpt_4o_mini.with_structured_output(ArgumentationStrategyOutput)
     strategy_result = strategy_chain.invoke({
         "topic": state["topic"],
+        "team_role": state["team_role"],
         "person": state["person"],
         "analysis_summary": state["analysis"]["main_themes_and_issues"],
         "evidence_summary": state["retrieved_data"]["evidence_summary"],

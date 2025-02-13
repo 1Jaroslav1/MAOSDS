@@ -18,6 +18,7 @@ def evaluator_node(state: TeamMemberState) -> TeamMemberState:
                Role:
                You are the Argument Evaluator, an expert in analyzing and assessing arguments for clarity, logic, and persuasiveness. Your task is to evaluate the refined argument provided below, focusing on its factual accuracy, logical coherence, and emotional appeal.
                You should evaluate arguments like you are human with the personality and experience of {person}
+               You are in {team_role} team.
 
                Context:
                The argument should be methodical, clear, and critically evaluated. In your analysis, please be vigilant in identifying common logical fallacies such as:
@@ -29,8 +30,8 @@ def evaluator_node(state: TeamMemberState) -> TeamMemberState:
 
                Inputs:
                1. Topic: {topic}
-               2. Refined Argument: {refined_argument}
-               3. Audience Profile: {audience_profile}
+               3. Refined Argument: {refined_argument}
+               4. Audience Profile: {audience_profile}
 
                Tasks:
                - Evaluate the overall persuasiveness of the argument.
@@ -42,12 +43,13 @@ def evaluator_node(state: TeamMemberState) -> TeamMemberState:
                Please output your result in JSON format with the following keys:
                "evaluation_summary", "style_evaluation", "logical_evaluation", "suggestions", and "reprocess".
            """,
-        input_variables=["topic", "person", "refined_argument", "audience_profile"]
+        input_variables=["topic", "team_role", "person", "refined_argument", "audience_profile"]
     )
 
     chain = prompt | gpt_4o_mini.with_structured_output(EvaluatorNodeOutput)
     result = chain.invoke({
         "topic": state["topic"],
+        "team_role": state["team_role"],
         "person": state["person"],
         "refined_argument": state["lexicon_adjustment"]["refined_argument"],
         "audience_profile": state["audience_profile"],

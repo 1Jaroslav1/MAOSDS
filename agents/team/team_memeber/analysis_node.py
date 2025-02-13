@@ -42,6 +42,8 @@ def extract_opponent_arguments(state: TeamMemberState, opponent_team_role: TeamR
             Role:
             You are the Opponent Arguments Extractor Agent.
             You should extract opponent arguments like you are human with such personality and experience: {person}
+            You are in {team_role} team.
+            
             Your task is to extract and structure key arguments from the opponent team’s statements.
 
             Instructions:
@@ -56,12 +58,13 @@ def extract_opponent_arguments(state: TeamMemberState, opponent_team_role: TeamR
             Extracted Arguments:
             - (Provide a structured list of arguments)
         """,
-        input_variables=["topic", "person", "opponent_transcript"]
+        input_variables=["topic", "team_role", "person", "opponent_transcript"]
     )
 
     chain = prompt | gpt_4o_mini.with_structured_output(OpponentArgumentsOutput)
     result = chain.invoke({
         "topic": state["topic"],
+        "team_role": state["team_role"],
         "person": state["person"],
         "opponent_transcript": opponent_transcript
     })

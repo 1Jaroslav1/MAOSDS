@@ -8,7 +8,7 @@ from pydantic import BaseModel, Field
 from typing import List, Optional
 
 
-tavily_tool = get_tavily_tool(max_results=5)
+tavily_tool = get_tavily_tool(max_results=2)
 tools = [tavily_tool]
 team_tools_node = ToolNode(tools)
 
