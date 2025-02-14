@@ -1,5 +1,5 @@
 from langchain_core.prompts import PromptTemplate
-from state import TeamMemberState, TeamRole
+from agents.team.team_memeber.state import TeamMemberState, TeamRole
 from agents.hub import gpt_4o_mini
 from pydantic import BaseModel, Field
 from typing_extensions import List

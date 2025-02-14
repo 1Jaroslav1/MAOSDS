@@ -1,7 +1,7 @@
 from langchain_core.prompts import PromptTemplate
 from langchain_core.messages import AIMessage
 from agents.hub import gpt_4o_mini
-from state import TeamMemberState
+from agents.team.team_memeber.state import TeamMemberState
 from langgraph.prebuilt import ToolNode
 from agents.hub import get_tavily_tool
 from pydantic import BaseModel, Field

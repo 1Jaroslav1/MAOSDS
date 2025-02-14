@@ -1,10 +1,10 @@
 from langgraph.graph import StateGraph, START, END
-from state import TeamMemberState
-from analysis_node import analysis_node
-from data_retrieval_node import data_retrieval_node
-from argumentation_node import argumentation_node
-from lexicon_manager_node import lexicon_manager_node
-from evaluator_node import evaluator_node
+from agents.team.team_memeber.state import TeamMemberState
+from agents.team.team_memeber.analysis_node import analysis_node
+from agents.team.team_memeber.data_retrieval_node import data_retrieval_node
+from agents.team.team_memeber.argumentation_node import argumentation_node
+from agents.team.team_memeber.lexicon_manager_node import lexicon_manager_node
+from agents.team.team_memeber.evaluator_node import evaluator_node
 
 
 MAX_ITERATIONS = 3

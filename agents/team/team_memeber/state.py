@@ -1,30 +1,5 @@
-from enum import Enum
-from langchain_core.messages import BaseMessage
 from typing_extensions import TypedDict, List, Optional
-
-
-class TeamRole(str, Enum):
-    PROPOSING = 'PROPOSING'
-    OPPOSING = 'OPPOSING'
-    CHAIRMAN = 'CHAIRMAN'
-    AUDIENCE = 'AUDIENCE'
-
-
-class TeamMember(TypedDict):
-    name: str
-    expertise: str
-    description: str
-
-
-class Transcript(TypedDict):
-    speaker: TeamMember
-    team_role: TeamRole
-    text: str
-
-
-class AudienceProfile:
-    demographics: str
-    interests: List[str]
+from agents.team.state import TeamRole, TeamMember, Transcript, AudienceProfile
 
 
 class AnalysisState(TypedDict):
@@ -73,22 +48,6 @@ class TeamMemberState(TypedDict):
     person: TeamMember
     transcript: List[Transcript]
     team_arguments: List[str]
-    opponent_arguments: List[str]
-    audience_profile: AudienceProfile
-    analysis: AnalysisState
-    retrieved_data: RetrievedData
-    argument: Argument
-    lexicon_adjustment: LexiconAdjustment
-    evaluation: Evaluation
-    iteration_number: int
-
-
-class TeamState(TypedDict):
-    topic: str
-    team_arguments: List[str]
-    members: List[TeamMember]
-    team_role: TeamRole
-    transcript: List[Transcript]
     opponent_arguments: List[str]
     audience_profile: AudienceProfile
     analysis: AnalysisState
