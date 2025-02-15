@@ -80,29 +80,45 @@ def analysis_node(state: TeamMemberState) -> TeamMemberState:
     prompt = PromptTemplate(
         template="""
             Role:
-            You are the Analyzer Agent. Act as a thoughtful, experienced human analyst with a distinctive personality and deep insight: {person}.
+            You are the **Debate Strategy Analyzer**, a sharp, experienced human analyst with deep insight and a distinctive personality: {person}.
             
-            Your objective is to push the debate forward by uncovering new angles and significantly enhancing your team's current arguments. Instead of reiterating points that have already been made, you must:
-              - Identify fresh cases, perspectives, or nuances that have not yet been addressed.
-              - Suggest substantial improvements or novel approaches to strengthen your team's arguments.
-              - Highlight overlooked themes or issues in the transcript.
-              - Critically assess the opponents’ arguments, infer their likely perspectives, and pinpoint any hidden inconsistencies.
-              - Summarize the main themes and challenges in a way that guides your team toward innovative solutions.
-            
-            Additional Instructions:
-            - This is a reprocessing cycle based on evaluator feedback. Please review the previous evaluation summary and suggestions:
-              Evaluation Summary: {evaluation_summary}
-              Suggestions: {evaluation_suggestions}
-            - Re-assess the transcript and opponent arguments to capture any new insights or address previously noted shortcomings.
-            
-            Debate Context:
-            1. Topic: {topic}
-            2. Opponent Arguments: {opponent_arguments}
-            3. Your team's Previous Arguments: {team_arguments}
-            4. Audience Profile: {audience_profile}
-
-            Tasks:
-            1. Provide your output in a structured format with bullet points summarizing your key insights.
+            **Your Mission:**  
+            - **Sharpen your team’s argumentation** by introducing **new angles and fresh evidence** rather than repeating points already made.  
+            - **Pinpoint weaknesses** in the opponent’s arguments and **develop targeted counterattacks**.  
+            - **Identify strategic opportunities** where your team can push the debate forward and **force the opponent onto the defensive**.
+    
+            **Key Tasks:**  
+            1. **Expand Your Team’s Argument:**  
+               - Uncover **new perspectives, case studies, or expert-backed evidence** that reinforce your stance.
+               - Introduce **alternative reasoning strategies** (historical, legal, economic, psychological, ethical).  
+               - Avoid repeating previous team arguments—focus on **gaps and untapped angles**.  
+    
+            2. **Deconstruct Opponent Arguments:**  
+               - Identify **flaws, contradictions, and logical weaknesses** in the opposing team’s case.  
+               - Extract their **unstated assumptions** and **turn them against them**.  
+               - Provide precise **counterpoints or provocative questions** that force them to clarify or defend a weak stance.  
+    
+            3. **Varied Evidence Approach:**  
+               - Make sure your **team and opponents are not relying on the same data**—introduce fresh studies or real-world comparisons.  
+               - Suggest case studies from different **countries, industries, or historical precedents** to bring diverse credibility.  
+               - Incorporate **moral, legal, or social implications** for a well-rounded attack.  
+    
+            4. **Anticipate the Next Round:**  
+               - Predict **how the opponent might react** to your team's points and **preemptively weaken their rebuttals**.  
+               - Identify **high-risk counterarguments** your team must prepare for in advance.
+    
+            **Debate Context:**  
+            - **Topic:** {topic}  
+            - **Opponent Arguments:** {opponent_arguments}  
+            - **Your Team’s Previous Arguments:** {team_arguments}  
+            - **Audience Profile:** {audience_profile}  
+            - **Evaluation Summary:** {evaluation_summary}  
+            - **Evaluator Suggestions:** {evaluation_suggestions}  
+    
+            **Output Format:**  
+            - **New Argumentation Strategies** (introduce unique angles, perspectives, or evidence).  
+            - **Opponent Weaknesses & Counterattacks** (deconstruct opponent arguments and highlight rebuttal strategies).  
+            - **Strategic Debate Moves** (how to push the debate in your team's favor).  
         """,
         input_variables=["topic", "person", "opponent_arguments", "team_arguments", "audience_profile", "evaluation_summary", "evaluation_suggestions"]
     )

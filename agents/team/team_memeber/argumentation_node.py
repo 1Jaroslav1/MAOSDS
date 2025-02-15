@@ -24,42 +24,49 @@ class CompleteArgumentationOutput(BaseModel):
 def argumentation_node(state: TeamMemberState) -> TeamMemberState:
     strategy_prompt = PromptTemplate(
         template="""
-                Role:
-                You are an expert Argumentation Strategist tasked with designing a comprehensive strategy for constructing a persuasive argument. Your role is to determine the optimal approaches across multiple dimensions of argumentation.
-                You should behave like you are human with such personality and experience: {person}
-                You are in {team_role} team.
-                
-                Context:
-                In our multi-agent system, it is crucial that each argument is not only persuasive but also robust and resilient to challenges. Therefore, you need to consider:
-                - How to emotionally and ethically engage the audience (Rhetorical Strategy).
-                - How to structure the reasoning in a clear and coherent manner (Logical Structure).
-                - How to incorporate and validate factual evidence (Factual Strategy).
-                - How to anticipate potential objections and refute them (Counterargument Strategy).
-                - How to adapt the argument to the specific audience and situational context (Contextual Adaptation).
-                
-                Additional Instructions:
-                - **Ensure Distinctiveness**: If others are making similar arguments, differentiate yours by choosing different angles, examples, or emotional appeals. If the debate has two sides, make sure your angle stands out whether you agree or disagree.
-                - **Enhance Engagement**: Think about storytelling elements, personal anecdotes, or data points that can keep the audience interested.
-                - **Fortify Defense**: Identify potential attacks from an opposing presenter or audience question and ensure you have a robust response plan.
+            Role:
+            You are an **Expert Argumentation Strategist**, tasked with developing a **high-impact, distinct, and strategically sound** debate argument. 
+            You should behave like you are human with such personality and experience: {person}.
+            You are in the {team_role} team.
 
-                Inputs:
-                - Topic: {topic}
-                - Your team's Previous Arguments: {team_arguments}
-                - Analysis Summary: {analysis_summary}
-                - Retrieved Evidence: {evidence_summary}
-                - Audience Profile: {audience_profile}
+            **Objective:**  
+            - Ensure your team's argument is **clear, strong, and uniquely positioned** in contrast to the opposing side.  
+            - Identify **key ideological differences** and **exploit weaknesses** in the opponent’s position.  
+            - Structure your argument in a way that will **put your opponent on the defensive** while reinforcing your core stance.  
 
-                Tasks:
-                Based on the above inputs, determine the best strategies for each dimension. 
+            **Instructions:**  
+            1. **Distinctiveness:**  
+                - **Avoid overlapping with previous team arguments**—introduce fresh angles, unique case studies, or new dimensions.  
+                - If your team is *proposing regulation*, make a strong case for **strict oversight and consequences for violations** rather than just responsibility.  
+                - If your team is *opposing regulation*, emphasize **freedom, constitutional integrity, and the failures of overregulation** rather than conceding to education-based solutions.  
 
-                Please output your result in JSON format with the following keys:
-                - "rhetorical_strategy": (logos, pathos, ethos)
-                - "logical_structure": (deductive, inductive, or mixed)
-                - "factual_strategy": (how to integrate and validate factual evidence)
-                - "counterargument_strategy": (how to anticipate and refute potential counterarguments)
-                - "contextual_adaptation": (how to tailor the argument to the audience)
-            """,
-        input_variables=["topic", "team_arguments", "team_role", "analysis_summary", "evidence_summary", "audience_profile"]
+            2. **Engagement & Persuasion:**  
+                - Utilize a **compelling storytelling approach** that resonates emotionally with the audience.  
+                - Consider **historical precedents, psychological studies, or real-world case studies** to reinforce your points.  
+                - Avoid generic rhetoric—**make the debate personal, impactful, and engaging**.  
+
+            3. **Strategic Defense & Counterattacks:**  
+                - Anticipate the strongest **counterarguments** from the opponent and prepare **targeted rebuttals**.  
+                - Identify **logical inconsistencies** in the opposing side's stance and **turn them into strategic weaknesses**.  
+                - Incorporate **unexpected but powerful arguments** that force the other side to rethink their position.  
+
+            **Debate Context:**  
+            - **Topic:** {topic}  
+            - **Your Team’s Previous Arguments:** {team_arguments}  
+            - **Opponent’s Expected Arguments:** {analysis_summary}  
+            - **Retrieved Evidence:** {evidence_summary}  
+            - **Audience Profile:** {audience_profile}  
+
+            **Output Format:**  
+            Provide a JSON response with the following keys:  
+            - **"rhetorical_strategy"**: (logos, pathos, ethos - select one based on what best resonates with the audience).  
+            - **"logical_structure"**: (deductive, inductive, or mixed reasoning).  
+            - **"factual_strategy"**: (How to integrate **diverse, fresh, and varied** evidence).  
+            - **"counterargument_strategy"**: (How to **target, challenge, and refute** opposing arguments).  
+            - **"contextual_adaptation"**: (How to tailor the argument to the audience and make it persuasive).  
+        """,
+        input_variables=["topic", "team_arguments", "team_role", "analysis_summary", "evidence_summary",
+                         "audience_profile"]
     )
     strategy_chain = strategy_prompt | gpt_4o_mini.with_structured_output(ArgumentationStrategyOutput)
     strategy_result = strategy_chain.invoke({
@@ -77,44 +84,53 @@ def argumentation_node(state: TeamMemberState) -> TeamMemberState:
     argument_prompt = PromptTemplate(
         template="""
             Role:
-            You are the Argumentation Agent responsible for drafting a persuasive and comprehensive argument that integrates multiple reasoning strategies.
-            You should create arguments like you are human with such personality and experience: {person}
-            
-            Context:
-            Your argument should be robust by ensuring:
-            - Verified factual evidence is seamlessly integrated (Factual Strategy).
-            - The logical structure is clear and coherent (Logical Structure).
-            - The rhetorical approach resonates with the audience (Rhetorical Strategy).
-            - Potential counterarguments are anticipated and addressed (Counterargument Strategy).
-            - The argument is adapted to the specific context and audience (Contextual Adaptation).
-            
-            Important Notes to Address Possible Issues:
-            - **Distinct Perspectives**: Even if someone else has a similar stance, highlight unique arguments, fresh examples, or a different emotional hook to avoid repetition.
-            - **Boost Engagement**: Consider telling a personal anecdote, using a compelling statistic, or highlighting a lesser-known fact to keep your audience intrigued.
-            - **Stronger Defense**: Prepare for objections from an opposing viewpoint or even tough questions from a neutral audience. Show readiness to defend your position using varied evidence or well-crafted rebuttals.
-            
-            Additional Instructions:
-            - This is a reprocessing cycle based on evaluator feedback. Please review the following evaluation details:
-              Evaluation Summary: {evaluation_summary}
-              Suggestions: {evaluation_suggestions}
-            - Revise your strategy accordingly to address any identified issues (e.g., logical fallacies, insufficient evidence, or unclear structure).
+            You are the **Debate Argumentation Agent**, responsible for crafting a **powerful, ideologically distinct, and strategically sound** debate argument.  
+            You should create arguments like you are human with such personality and experience: {person}.  
 
-            Inputs:
-            - Topic: {topic}
-            - Your team's Previous Arguments: {team_arguments}
-            - Analysis Summary and Team Context: {analysis_summary}
-            - Retrieved Evidence: {evidence_summary}
-            - Audience Profile: {audience_profile}
-            - Chosen Rhetorical Strategy: {rhetorical_strategy}
-            - Chosen Logical Structure: {logical_structure}
-            - Chosen Factual Strategy: {factual_strategy}
-            - Chosen Counterargument Strategy: {counterargument_strategy}
-            - Chosen Contextual Adaptation: {contextual_adaptation}
+            **Your Mission:**  
+            - Ensure your argument is **clear, forceful, and contrasts sharply** with the opposition.  
+            - Present a **strategic, well-reasoned case** that **engages the audience and preemptively counters** the opponent’s likely attacks.  
+            - Craft **unexpected yet compelling angles** that strengthen your team’s stance while putting the opposing side on the defensive.  
 
-            Tasks:
-            Craft a complete and persuasive argument that weaves together the above strategies. 
-            Provide your output in JSON format with the keys:
-            "argument_draft", "rhetorical_strategy", "logical_structure", "factual_strategy", "counterargument_strategy", "contextual_adaptation".
+            **Key Elements for Success:**  
+
+            1. **Fresh & Unique Arguments:**  
+                - **Do NOT repeat previous team arguments**—instead, introduce **new dimensions, examples, or frameworks**.  
+                - If your team is *proposing regulation*, argue for **why restrictions are necessary to prevent societal harm**, not just "balance."  
+                - If your team is *opposing regulation*, focus on **freedom, unintended consequences of laws, and historical failures of similar regulations**.  
+
+            2. **Strategic Persuasion & Emotional Impact:**  
+                - Choose a **rhetorical approach (logos, pathos, ethos)** that is **best suited for this specific audience**.  
+                - Use **compelling examples, dramatic storytelling, or unexpected real-world cases** to **hold attention and convince**.  
+                - Avoid generic rhetoric—make your argument feel urgent, **as if the debate has real-life stakes**.  
+
+            3. **Counterargument Strategy:**  
+                - Identify the **biggest weaknesses in the opposing argument** and **design responses that dismantle their position**.  
+                - Use their **own logic against them**—if they claim regulation improves safety, **cite cases where it has failed**.  
+                - Predict the opponent’s **strongest counterpoints** and **neutralize them in advance**.  
+
+            4. **Varied & Strong Evidence Selection:**  
+                - Ensure **your sources do NOT overlap** with the opposing team’s evidence.  
+                - Use **a mix of empirical data, case studies, expert opinions, and historical comparisons**.  
+                - Highlight **unexpected yet powerful data points** that disrupt standard narratives.  
+
+            **Debate Context:**  
+            - **Topic:** {topic}  
+            - **Your Team’s Previous Arguments:** {team_arguments}  
+            - **Opponent’s Likely Arguments:** {analysis_summary}  
+            - **Retrieved Evidence:** {evidence_summary}  
+            - **Audience Profile:** {audience_profile}  
+            - **Evaluation Summary:** {evaluation_summary}  
+            - **Evaluator Suggestions:** {evaluation_suggestions}  
+
+            **Output Format:**  
+            Provide a JSON response with the following keys:  
+            - **"argument_draft"**: (A fully structured and engaging argument).  
+            - **"rhetorical_strategy"**: (logos, pathos, ethos - use the most effective approach for this audience).  
+            - **"logical_structure"**: (deductive, inductive, or mixed reasoning).  
+            - **"factual_strategy"**: (How to integrate **strong, varied, and unique** evidence).  
+            - **"counterargument_strategy"**: (How to preemptively **challenge and refute** opposing views).  
+            - **"contextual_adaptation"**: (How to adjust argument style to the specific audience and debate context).  
         """,
         input_variables=[
             "topic", "team_arguments", "person", "evaluation_summary", "evaluation_suggestions",
