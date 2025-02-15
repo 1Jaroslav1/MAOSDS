@@ -1,6 +1,7 @@
 from typing_extensions import List
 from langgraph.graph import StateGraph, START, END
-from state import TeamState, TeamMember, Transcript
+from agents.team.state import TeamState
+from agents.model.model import TeamMember, Transcript
 from agents.team.team_memeber import create_team_member_workflow, TeamMemberState
 
 

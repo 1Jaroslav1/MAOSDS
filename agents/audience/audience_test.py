@@ -1,9 +1,12 @@
 from audience import create_audience
 from typing_extensions import List
-from state import AudienceMember, AudienceState
+from agents.audience.state import AudienceState
+from agents.model.model import AudienceMember
 
 audience_state: AudienceState = {
     "topic": "All workers deserve equal pay for equal work.",
+    "transcript": [],
+
     "initial_scores": [],
     "final_scores": []
 }
@@ -41,9 +44,9 @@ audience_members: List[AudienceMember] = [
     }
 ]
 
-audience_workflow = create_audience(audience_members)
+audience_workflow = create_audience("init", audience_members)
 audience = audience_workflow.compile()
-audience.get_graph().draw_mermaid_png(output_file_path ="audience.png")
+audience.get_graph().draw_mermaid_png(output_file_path="audience.png")
 
 result = audience.invoke(audience_state)
 print(result)

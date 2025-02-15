@@ -1,5 +1,6 @@
 from langchain_core.prompts import PromptTemplate
-from agents.team.team_memeber.state import TeamMemberState, TeamRole
+from agents.team.team_memeber.state import TeamMemberState
+from agents.model.model import TeamRole
 from agents.hub import gpt_4o_mini
 from pydantic import BaseModel, Field
 from typing_extensions import List
@@ -52,7 +53,7 @@ def extract_opponent_arguments(state: TeamMemberState, opponent_team_role: TeamR
             - Format arguments in bullet points, capturing **only substantive claims**.
             
             Topic: {topic}
-            Debate Transcript:
+            Opponent Debate Transcript:
             {opponent_transcript}
 
             Extracted Arguments:
@@ -79,13 +80,14 @@ def analysis_node(state: TeamMemberState) -> TeamMemberState:
     prompt = PromptTemplate(
         template="""
             Role:
-            You are the Analyzer Agent.
-            You should analyze like you are human with such personality and experience: {person}
-            Your task is to examine the following debate context—including the transcript, opponent’s arguments, and audience profile—and perform the following analyses:
-              - Summarize the main themes and issues.
-              - Evaluate the arguments already provided by your teammates and identify gaps or opportunities for improvement.
-              - Infer the opponents’ likely perspectives.
-              - Highlight any weaknesses or inconsistencies in the opponent’s arguments.
+            You are the Analyzer Agent. Act as a thoughtful, experienced human analyst with a distinctive personality and deep insight: {person}.
+            
+            Your objective is to push the debate forward by uncovering new angles and significantly enhancing your team's current arguments. Instead of reiterating points that have already been made, you must:
+              - Identify fresh cases, perspectives, or nuances that have not yet been addressed.
+              - Suggest substantial improvements or novel approaches to strengthen your team's arguments.
+              - Highlight overlooked themes or issues in the transcript.
+              - Critically assess the opponents’ arguments, infer their likely perspectives, and pinpoint any hidden inconsistencies.
+              - Summarize the main themes and challenges in a way that guides your team toward innovative solutions.
             
             Additional Instructions:
             - This is a reprocessing cycle based on evaluator feedback. Please review the previous evaluation summary and suggestions:
@@ -95,21 +97,19 @@ def analysis_node(state: TeamMemberState) -> TeamMemberState:
             
             Debate Context:
             1. Topic: {topic}
-            2. Transcript: {transcript}
-            3. Opponent Arguments: {opponent_arguments}
-            4. Team's Previous Arguments: {team_arguments}
-            5. Audience Profile: {audience_profile}
+            2. Opponent Arguments: {opponent_arguments}
+            3. Your team's Previous Arguments: {team_arguments}
+            4. Audience Profile: {audience_profile}
 
             Tasks:
             1. Provide your output in a structured format with bullet points summarizing your key insights.
         """,
-        input_variables=["topic", "person", "transcript", "opponent_arguments", "team_arguments", "audience_profile", "evaluation_summary", "evaluation_suggestions"]
+        input_variables=["topic", "person", "opponent_arguments", "team_arguments", "audience_profile", "evaluation_summary", "evaluation_suggestions"]
     )
     chain = prompt | gpt_4o_mini.with_structured_output(AnalysisNodeOutput)
     result = chain.invoke({
         "topic": state["topic"],
         "person": state["person"],
-        "transcript": state["transcript"],
         "opponent_arguments": state["opponent_arguments"],
         "team_arguments": state["team_arguments"],
         "audience_profile": state["audience_profile"],

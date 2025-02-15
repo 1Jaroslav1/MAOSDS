@@ -38,13 +38,13 @@ def argumentation_node(state: TeamMemberState) -> TeamMemberState:
                 - How to adapt the argument to the specific audience and situational context (Contextual Adaptation).
                 
                 Additional Instructions:
-                - This is a reprocessing cycle based on evaluator feedback. Please review the following evaluation details:
-                  Evaluation Summary: {evaluation_summary}
-                  Suggestions: {evaluation_suggestions}
-                - Revise your strategy accordingly to address any identified issues (e.g., logical fallacies, insufficient evidence, or unclear structure).
+                - **Ensure Distinctiveness**: If others are making similar arguments, differentiate yours by choosing different angles, examples, or emotional appeals. If the debate has two sides, make sure your angle stands out whether you agree or disagree.
+                - **Enhance Engagement**: Think about storytelling elements, personal anecdotes, or data points that can keep the audience interested.
+                - **Fortify Defense**: Identify potential attacks from an opposing presenter or audience question and ensure you have a robust response plan.
 
                 Inputs:
                 - Topic: {topic}
+                - Your team's Previous Arguments: {team_arguments}
                 - Analysis Summary: {analysis_summary}
                 - Retrieved Evidence: {evidence_summary}
                 - Audience Profile: {audience_profile}
@@ -59,18 +59,17 @@ def argumentation_node(state: TeamMemberState) -> TeamMemberState:
                 - "counterargument_strategy": (how to anticipate and refute potential counterarguments)
                 - "contextual_adaptation": (how to tailor the argument to the audience)
             """,
-        input_variables=["topic", "team_role", "analysis_summary", "evidence_summary", "audience_profile", "evaluation_summary", "evaluation_suggestions"]
+        input_variables=["topic", "team_arguments", "team_role", "analysis_summary", "evidence_summary", "audience_profile"]
     )
     strategy_chain = strategy_prompt | gpt_4o_mini.with_structured_output(ArgumentationStrategyOutput)
     strategy_result = strategy_chain.invoke({
         "topic": state["topic"],
+        "team_arguments": state["team_arguments"],
         "team_role": state["team_role"],
         "person": state["person"],
         "analysis_summary": state["analysis"]["main_themes_and_issues"],
         "evidence_summary": state["retrieved_data"]["evidence_summary"],
-        "audience_profile": state["audience_profile"],
-        "evaluation_summary": state["evaluation"].get("evaluation_summary", "No previous evaluation available."),
-        "evaluation_suggestions": state["evaluation"].get("suggestions", "No suggestions provided.")
+        "audience_profile": state["audience_profile"]
     })
 
     combined_analysis = state["analysis"]["main_themes_and_issues"] + state.get("team_arguments", [])
@@ -88,9 +87,21 @@ def argumentation_node(state: TeamMemberState) -> TeamMemberState:
             - The rhetorical approach resonates with the audience (Rhetorical Strategy).
             - Potential counterarguments are anticipated and addressed (Counterargument Strategy).
             - The argument is adapted to the specific context and audience (Contextual Adaptation).
+            
+            Important Notes to Address Possible Issues:
+            - **Distinct Perspectives**: Even if someone else has a similar stance, highlight unique arguments, fresh examples, or a different emotional hook to avoid repetition.
+            - **Boost Engagement**: Consider telling a personal anecdote, using a compelling statistic, or highlighting a lesser-known fact to keep your audience intrigued.
+            - **Stronger Defense**: Prepare for objections from an opposing viewpoint or even tough questions from a neutral audience. Show readiness to defend your position using varied evidence or well-crafted rebuttals.
+            
+            Additional Instructions:
+            - This is a reprocessing cycle based on evaluator feedback. Please review the following evaluation details:
+              Evaluation Summary: {evaluation_summary}
+              Suggestions: {evaluation_suggestions}
+            - Revise your strategy accordingly to address any identified issues (e.g., logical fallacies, insufficient evidence, or unclear structure).
 
             Inputs:
             - Topic: {topic}
+            - Your team's Previous Arguments: {team_arguments}
             - Analysis Summary and Team Context: {analysis_summary}
             - Retrieved Evidence: {evidence_summary}
             - Audience Profile: {audience_profile}
@@ -106,7 +117,7 @@ def argumentation_node(state: TeamMemberState) -> TeamMemberState:
             "argument_draft", "rhetorical_strategy", "logical_structure", "factual_strategy", "counterargument_strategy", "contextual_adaptation".
         """,
         input_variables=[
-            "topic", "person",
+            "topic", "team_arguments", "person", "evaluation_summary", "evaluation_suggestions",
             "analysis_summary", "evidence_summary", "audience_profile",
             "rhetorical_strategy", "logical_structure", "factual_strategy",
             "counterargument_strategy", "contextual_adaptation"
@@ -115,7 +126,10 @@ def argumentation_node(state: TeamMemberState) -> TeamMemberState:
     argument_chain = argument_prompt | gpt_4o_mini.with_structured_output(CompleteArgumentationOutput)
     argument_result = argument_chain.invoke({
         "topic": state["topic"],
+        "team_arguments": state["team_arguments"],
         "person": state["person"],
+        "evaluation_summary": state["evaluation"].get("evaluation_summary", "No previous evaluation available."),
+        "evaluation_suggestions": state["evaluation"].get("suggestions", "No suggestions provided."),
         "analysis_summary": combined_analysis,
         "evidence_summary": state["retrieved_data"]["evidence_summary"],
         "audience_profile": state["audience_profile"],

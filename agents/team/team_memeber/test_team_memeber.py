@@ -1,7 +1,43 @@
+from typing_extensions import List
 from team_member import create_team_member_workflow
-from state import TeamMemberState, TeamRole
+from state import TeamMemberState
+from agents.model.model import TeamRole
+from agents.audience import AudienceMember
 
 team_member_1 = create_team_member_workflow()
+
+audience_members: List[AudienceMember] = [
+    {
+        "name": "Alice",
+        "interests": ["technology", "innovation"],
+        "work_experience": ["software engineer"],
+        "personality": ["analytical"]
+    },
+    {
+        "name": "Bob",
+        "interests": ["finance", "economics"],
+        "work_experience": ["banker"],
+        "personality": ["conservative"]
+    },
+    {
+        "name": "Charlie",
+        "interests": ["arts", "culture"],
+        "work_experience": ["artist"],
+        "personality": ["creative"]
+    },
+    {
+        "name": "Dana",
+        "interests": ["science", "research"],
+        "work_experience": ["researcher"],
+        "personality": ["curious"]
+    },
+    {
+        "name": "Eric",
+        "interests": ["All people should earn the same amount of moneys", "politics", "all people are equal"],
+        "work_experience": ["post"],
+        "personality": ["passionate communist"]
+    }
+]
 
 team_member_state: TeamMemberState = {
     "topic": "Should artificial intelligence have legal rights and responsibilities, similar to humans and corporations?",
@@ -15,8 +51,7 @@ team_member_state: TeamMemberState = {
     "team_arguments": [],
     "opponent_arguments": [],
     "audience_profile": {
-        "demographics": "Academics, policymakers, and technology professionals",
-        "interests": ["AI ethics", "law", "technological impact", "human rights"]
+        "audience_members": audience_members,
     },
     "analysis": {},
     "retrieved_data": {},

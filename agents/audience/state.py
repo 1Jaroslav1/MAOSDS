@@ -1,9 +1,14 @@
 from typing_extensions import TypedDict, List
 from typing import Annotated
-import operator
+
+from agents.model.model import Decision, Transcript
 
 
 def topic_reducer(existing: str, new: str) -> str:
+    return existing if existing else new
+
+
+def transcript_reducer(existing: List[Transcript], new: List[Transcript]) -> List[Transcript]:
     return existing if existing else new
 
 
@@ -15,19 +20,8 @@ def unique_append(existing: List[dict], new: List[dict]) -> List[dict]:
     return existing
 
 
-class Decision(TypedDict):
-    name: str
-    value: str
-
-
-class AudienceMember(TypedDict):
-    name: str
-    interests: List[str]
-    work_experience: List[str]
-    personality: List[str]
-
-
 class AudienceState(TypedDict):
     topic: Annotated[str, topic_reducer]
+    transcript: Annotated[List[Transcript], transcript_reducer]
     initial_scores: Annotated[List[Decision], unique_append]
     final_scores: Annotated[List[Decision], unique_append]

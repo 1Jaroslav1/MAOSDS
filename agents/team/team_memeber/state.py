@@ -1,5 +1,5 @@
 from typing_extensions import TypedDict, List, Optional
-from agents.team.state import TeamRole, TeamMember, Transcript, AudienceProfile
+from agents.model.model import TeamRole, TeamMember, Transcript, AudienceProfile
 
 
 class AnalysisState(TypedDict):
