@@ -2,10 +2,12 @@ import random
 from agents.debate.state import DebateState
 from langgraph.graph import StateGraph, START, END
 from agents.audience.audience import create_audience
-from agents.team import create_team_workflow
-from agents.model.model import TeamRole
+from agents.team import create_team_workflow, human_argument
+from agents.model.model import TeamRole, Transcript
 from typing_extensions import List
 from agents.model.model import Decision
+from agents.tutor.tutor import creat_tutor
+from langgraph.errors import GraphInterrupt
 
 
 def determine_winner(initial_scores: List[Decision], final_scores: List[Decision]) -> str:
@@ -30,7 +32,15 @@ def determine_winner(initial_scores: List[Decision], final_scores: List[Decision
     elif swing_disagree > swing_agree:
         return "Opposing Team wins"
     else:
-        return "Tie"
+        final_agree = sum(1 for d in final_scores if d["value"] == "agree")
+        final_disagree = sum(1 for d in final_scores if d["value"] == "disagree")
+
+        if final_agree > final_disagree:
+            return "Pro Team wins"
+        elif final_disagree > final_agree:
+            return "Opposing Team wins"
+        else:
+            return "Tie"
 
 
 def audience_init_node(state: DebateState):
@@ -65,35 +75,66 @@ def audience_final_node(state: DebateState):
     return state
 
 
-def pro_team_node(state: DebateState):
-    team_workflow = create_team_workflow(state["proposing_members"])
-    team = team_workflow.compile()
-    result = team.invoke({
-        "topic": state["topic"],
-        "team_role": TeamRole.PROPOSING,
-        "transcript": state["transcript"],
-        "audience_profile": {
-             "audience_members": state["audience_members"]
-        }
-    })
+def create_team_node(member_key: str, team_role: TeamRole):
+    def team_node(state: DebateState):
+        team_workflow = create_team_workflow(state[member_key])
+        team = team_workflow.compile()
+        result = team.invoke({
+            "topic": state["topic"],
+            "team_role": team_role,
+            "transcript": state["transcript"],
+            "audience_profile": {
+                "audience_members": state["audience_members"]
+            }
+        })
+        state["round"] += 1
+        state["transcript"] = result["transcript"]
+        return state
+
+    return team_node
+
+def user_node(state: DebateState):
+    try:
+        result = human_argument()
+    except GraphInterrupt as gi:
+        user_input = input("Please enter your argument: ")
+        result = user_input
+
     state["round"] += 1
-    state["transcript"] = result["transcript"]
+    state["transcript"] = [
+        {
+            "speaker": {
+                "name": "Yaroslav Harbar",
+                "experience": ["web development", "cloud solutions", "system architecture", "large language models"],
+                "description": "Active student in the Warsaw University of Technologies on the AI course"
+            },
+            "team_role": TeamRole.USER,
+            "text": result
+        }
+    ]
+
     return state
 
 
-def opp_team_node(state: DebateState):
-    team_workflow = create_team_workflow(state["opposing_members"])
-    team = team_workflow.compile()
-    result = team.invoke({
+def get_transcripts_by_role(transcript: List[Transcript], role: TeamRole) -> List[Transcript]:
+    return [t for t in transcript if t["team_role"] == role]
+
+
+def tutor_node(state: DebateState):
+    tutor_workflow = creat_tutor()
+    tutor = tutor_workflow.compile()
+
+    result = tutor.invoke({
         "topic": state["topic"],
-        "team_role": TeamRole.OPPOSING,
-        "transcript": state["transcript"],
+        "user_arguments": get_transcripts_by_role(state["transcript"], TeamRole.USER),
+        "opponent_arguments": get_transcripts_by_role(state["transcript"], TeamRole.OPPOSING),
         "audience_profile": {
             "audience_members": state["audience_members"]
         }
     })
-    state["round"] += 1
-    state["transcript"] = result["transcript"]
+
+    print("============Tutor score===========\n\n", result)
+
     return state
 
 
@@ -112,14 +153,17 @@ def next_round(state: DebateState):
 def create_debate():
     workflow = StateGraph(DebateState)
     workflow.add_node("audience_init", audience_init_node)
-    workflow.add_node("pro_team", pro_team_node)
-    workflow.add_node("opp_team", opp_team_node)
+    workflow.add_node("pro_team", user_node)
+    # workflow.add_node("pro_team", create_team_node("proposing_members", TeamRole.PROPOSING))
+    workflow.add_node("opp_team", create_team_node("opposing_members", TeamRole.OPPOSING))
     workflow.add_node("audience_final", audience_final_node)
+    workflow.add_node("tutor_node", tutor_node)
 
     workflow.add_edge(START, "audience_init")
     workflow.add_edge("audience_init", first_team)
     workflow.add_edge(first_team, second_team)
     workflow.add_conditional_edges(second_team, next_round, [first_team, "audience_final"])
-    workflow.add_edge("audience_final", END)
+    workflow.add_edge("audience_final", "tutor_node")
+    workflow.add_edge("tutor_node", END)
 
     return workflow

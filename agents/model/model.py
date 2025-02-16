@@ -20,6 +20,7 @@ class TeamRole(str, Enum):
     OPPOSING = 'OPPOSING'
     CHAIRMAN = 'CHAIRMAN'
     AUDIENCE = 'AUDIENCE'
+    USER = 'USER'
 
 
 class TeamMember(TypedDict):
@@ -34,5 +35,5 @@ class Transcript(TypedDict):
     text: str
 
 
-class AudienceProfile:
+class AudienceProfile(TypedDict):
     audience_members: List[AudienceMember]
