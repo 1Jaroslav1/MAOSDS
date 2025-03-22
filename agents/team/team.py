@@ -1,37 +1,66 @@
-from langgraph.prebuilt import ToolNode
 from typing_extensions import List
-from agents.hub import get_tavily_tool
-from langgraph.graph import StateGraph, START
-from .model import TeamState, TeamMember
-from .team_leader import team_leader_node
-from .team_member import TeamMemberNode
-
-tavily_tool = get_tavily_tool(max_results=5)
-tools = [tavily_tool]
+from langgraph.graph import StateGraph, START, END
+from agents.team.state import TeamState
+from agents.model.model import TeamMember, Transcript
+from agents.team.team_memeber import create_team_member_workflow, TeamMemberState
 
 
-def is_all_members_executed(state: TeamState):
-    if len(state["executed_members"]) == len(state["members"]):
-        return
+def create_team_member_node(person: TeamMember):
+    def team_member_node(state: TeamState):
+        team_member_workflow = create_team_member_workflow()
+        team_member = team_member_workflow.compile()
+
+        team_member_state: TeamMemberState = {
+            "topic": state["topic"],
+            "team_role": state["team_role"],
+            "person": person,
+            "transcript": state["transcript"],
+            "audience_profile": state["audience_profile"],
+            "team_arguments": [],
+            "opponent_arguments": [],
+            "analysis": {},
+            "retrieved_data": {},
+            "argument": {},
+            "lexicon_adjustment": {},
+            "evaluation": {},
+            "iteration_number": 0
+        }
+
+        result = team_member.invoke(team_member_state)
+
+        team_member_transcript: Transcript = {
+            "speaker": person,
+            "team_role": state["team_role"],
+            "text": result["lexicon_adjustment"]["refined_argument"]
+        }
+
+        state["transcript"] = state["transcript"] + [team_member_transcript]
+
+        return state
+
+    return team_member_node
 
 
-def create_team_graph(members: List[TeamMember]) -> StateGraph:
-    team_tools_node = ToolNode(tools)
+def create_team_workflow(members: List[TeamMember]) -> StateGraph:
+    if len(members) < 1:
+        raise ValueError("Not enough members")
 
     workflow = StateGraph(TeamState)
-    workflow.add_node("team_leader_node", team_leader_node)
-    workflow.add_node("team_tools_node", team_tools_node)
-    
-    for member in members:
-        team_member_node = TeamMemberNode(member=member)
+    i_member = members[0]
+    workflow.add_node(i_member["name"], create_team_member_node(i_member))
+    workflow.add_edge(START, i_member["name"])
 
-        member_node = team_member_node.create_member_node()
-        member_name = member["name"]
+    for i in range(1, len(members) - 1):
+        j_member = members[i]
+        workflow.add_node(j_member["name"], create_team_member_node(j_member))
+        workflow.add_edge(i_member["name"], j_member["name"])
+        i_member = j_member
 
-        workflow.add_node(member_name, member_node)
-        workflow.add_edge(member_name, "team_leader_node")
+    j_member = members[len(members) - 1]
+    if len(members) > 1:
+        workflow.add_node(j_member["name"], create_team_member_node(j_member))
+        workflow.add_edge(i_member["name"], j_member["name"])
 
-    workflow.add_edge(START, "team_leader_node")
-    workflow.add_conditional_edges("team_leader_node", lambda state: state["next"])
+    workflow.add_edge(j_member["name"], END)
 
     return workflow
