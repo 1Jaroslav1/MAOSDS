@@ -7,23 +7,23 @@ from agents.tutor.utils import summarize_audience_profile
 
 
 class StyleClarityAnalysisOutput(BaseModel):
-    clarity_assessment: str = Field(
-        description="Evaluation of the clarity and conciseness of the language used in the arguments."
+    language_use: str = Field(
+        description="An evaluation of the vocabulary, tone, and overall language quality used in the user's arguments."
     )
-    rhetorical_device_evaluation: str = Field(
-        description="Assessment of the use of rhetorical devices (e.g., rhetorical questions, imagery, metaphors) and overall stylistic flair."
+    sentence_structure: str = Field(
+        description="An assessment of the grammar, flow, and construction of sentences in the argumentation."
     )
-    readability_assessment: str = Field(
-        description="Evaluation of overall readability, pacing, and language precision in relation to the audience."
+    readability: str = Field(
+        description="An evaluation of how clear and easy-to-read the argumentation is overall."
     )
 
 
 class StyleClarityFeedbackOutput(BaseModel):
     score: int = Field(
-        description="Numeric score (1-10) reflecting the overall style, clarity, and rhetorical effectiveness."
+        description="Numeric score (1-10) reflecting the overall clarity and style of the user's argumentation."
     )
     feedback: str = Field(
-        description="Actionable suggestions for enhancing clarity, conciseness, and overall rhetorical style."
+        description="Actionable suggestions to improve language use, sentence structure, and readability."
     )
 
 
@@ -34,38 +34,37 @@ def modify_transcripts(transcripts: List[dict]) -> str:
 
 
 def style_clarity_analysis(state: TutorState) -> StyleClarityAnalysisOutput:
-    user_args = modify_transcripts(state["user_arguments"])
-    opponent_args = modify_transcripts(state["opponent_arguments"])
-    combined_content = f"User Arguments:\n{user_args}\n\nOpponent Arguments:\n{opponent_args}"
+    # Focus on the user's argument transcript.
+    user_transcript = modify_transcripts(state["user_arguments"])
 
-    style_clarity_prompt = PromptTemplate(
+    analysis_prompt = PromptTemplate(
         template="""
             Role:
-            You are a **Style & Clarity (Rhetorical Technique) Agent**. Your task is to evaluate the overall clarity, conciseness, and rhetorical style of the debate on the topic "{topic}".
-            Below are the combined arguments from both sides:
-            
-            {combined_content}
-            
+            You are a **Style and Clarity Analysis Agent**. Your task is to evaluate how clearly and effectively the user's arguments are communicated for the topic "{topic}".
+
+            User Argument Transcript:
+            {user_transcript}
+
             Audience Profile:
             {audience_profile}
-            
+
             Please perform the following tasks:
-            1. Evaluate the clarity and conciseness of the language used. Are the arguments easy to follow, or are they overly verbose or vague?
-            2. Assess the use of rhetorical devices such as rhetorical questions, imagery, and metaphors. Comment on the overall stylistic flair.
-            3. Evaluate the overall readability, pacing, and precision of language, considering the audience’s familiarity with the topic.
-            
+            1. Assess the language use, including vocabulary, tone, and overall language quality.
+            2. Evaluate the sentence structure, grammar, and flow of the arguments.
+            3. Determine the overall readability and clarity of the argumentation.
+
             Return your analysis in JSON format with these keys:
-            - "clarity_assessment": Your evaluation of clarity and conciseness.
-            - "rhetorical_device_evaluation": Your assessment of the use of rhetorical devices and stylistic flair.
-            - "readability_assessment": Your evaluation of overall readability and language precision.
+            - "language_use": Your evaluation of the language and tone.
+            - "sentence_structure": Your assessment of the sentence construction and flow.
+            - "readability": Your evaluation of the overall clarity and readability.
             """,
-        input_variables=["topic", "combined_content", "audience_profile"]
+        input_variables=["topic", "user_transcript", "audience_profile"]
     )
 
-    style_clarity_chain = style_clarity_prompt | gpt_4o_mini.with_structured_output(StyleClarityAnalysisOutput)
-    analysis_result = style_clarity_chain.invoke({
+    analysis_chain = analysis_prompt | gpt_4o_mini.with_structured_output(StyleClarityAnalysisOutput)
+    analysis_result = analysis_chain.invoke({
         "topic": state["topic"],
-        "combined_content": combined_content,
+        "user_transcript": user_transcript,
         "audience_profile": summarize_audience_profile(state["audience_profile"]),
     })
 
@@ -75,39 +74,38 @@ def style_clarity_analysis(state: TutorState) -> StyleClarityAnalysisOutput:
 def style_clarity_feedback_node(state: TutorState) -> TutorState:
     analysis = style_clarity_analysis(state)
 
-    style_clarity_feedback_prompt = PromptTemplate(
+    feedback_prompt = PromptTemplate(
         template="""
-        Role:
-        You are a **Style & Clarity Feedback Agent**. Based on the following analysis:
-        
-        - Clarity Assessment: {clarity_assessment}
-        - Rhetorical Device Evaluation: {rhetorical_device_evaluation}
-        - Readability Assessment: {readability_assessment}
-        
-        Please provide:
-        1. A numeric score (1–10) reflecting the overall style, clarity, and rhetorical effectiveness:
-           - 1–3: Hard to follow, overly verbose or vague.
-           - 4–6: Understandable but stylistically inconsistent; frequent filler phrases.
-           - 7–9: Generally clear, engaging language with minimal stylistic issues.
-           - 10: Captivating style and precise language, well-suited to the topic and audience.
-        2. Actionable feedback with recommendations for simplifying or enhancing word choice and overall presentation, referencing the audience profile where applicable.
-        
-        Return your response in JSON format with these keys:
-        - "score": The numeric score.
-        - "feedback": Detailed suggestions for improvement.
-        """,
-        input_variables=["clarity_assessment", "rhetorical_device_evaluation", "readability_assessment"]
+            Role:
+            You are a **Style and Clarity Feedback Agent**. Based on the following analysis of the user's argumentation:
+
+            - Language Use: {language_use}
+            - Sentence Structure: {sentence_structure}
+            - Readability: {readability}
+
+            Please provide:
+            1. A numeric score (1–10) that reflects the overall clarity and style of the user's argumentation:
+               - 1–3: Poor clarity and style; the argument is difficult to read and understand.
+               - 4–6: Average clarity and style; some areas need improvement.
+               - 7–9: Good clarity and style; minor enhancements could be made.
+               - 10: Excellent clarity and style; the argument is exceptionally well-written and easy to follow.
+            2. Detailed, actionable feedback with specific suggestions for enhancing language use, sentence structure, and overall readability.
+
+            Return your response in JSON format with these keys:
+            - "score": The numeric score.
+            - "feedback": Detailed suggestions for improvement.
+            """,
+        input_variables=["language_use", "sentence_structure", "readability"]
     )
 
-    style_clarity_feedback_chain = style_clarity_feedback_prompt | gpt_4o_mini.with_structured_output(
-        StyleClarityFeedbackOutput)
-    feedback_result = style_clarity_feedback_chain.invoke({
-        "clarity_assessment": analysis.clarity_assessment,
-        "rhetorical_device_evaluation": analysis.rhetorical_device_evaluation,
-        "readability_assessment": analysis.readability_assessment,
+    feedback_chain = feedback_prompt | gpt_4o_mini.with_structured_output(StyleClarityFeedbackOutput)
+    feedback_result = feedback_chain.invoke({
+        "language_use": analysis.language_use,
+        "sentence_structure": analysis.sentence_structure,
+        "readability": analysis.readability,
     })
 
-    state["style_clarity"] = {
+    state["style_clarity_analysis"] = {
         "score": feedback_result.score,
         "feedback": feedback_result.feedback,
     }

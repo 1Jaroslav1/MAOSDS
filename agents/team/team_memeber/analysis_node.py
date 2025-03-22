@@ -49,7 +49,6 @@ def extract_opponent_arguments(state: TeamMemberState, opponent_team_role: TeamR
 
             Instructions:
             - Identify **clear and concise** argument points from the transcript.
-            - Ignore rhetorical statements, general commentary, and moderator inputs.
             - Format arguments in bullet points, capturing **only substantive claims**.
             
             Topic: {topic}
@@ -113,12 +112,7 @@ def analysis_node(state: TeamMemberState) -> TeamMemberState:
             - **Your Team’s Previous Arguments:** {team_arguments}  
             - **Audience Profile:** {audience_profile}  
             - **Evaluation Summary:** {evaluation_summary}  
-            - **Evaluator Suggestions:** {evaluation_suggestions}  
-    
-            **Output Format:**  
-            - **New Argumentation Strategies** (introduce unique angles, perspectives, or evidence).  
-            - **Opponent Weaknesses & Counterattacks** (deconstruct opponent arguments and highlight rebuttal strategies).  
-            - **Strategic Debate Moves** (how to push the debate in your team's favor).  
+            - **Evaluator Suggestions:** {evaluation_suggestions}   
         """,
         input_variables=["topic", "person", "opponent_arguments", "team_arguments", "audience_profile", "evaluation_summary", "evaluation_suggestions"]
     )

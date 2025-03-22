@@ -8,6 +8,9 @@ from typing_extensions import List
 from agents.model.model import Decision
 from agents.tutor.tutor import creat_tutor
 from langgraph.errors import GraphInterrupt
+from agents.hub.llm_hub import gpt_4o_mini
+from langchain.prompts import PromptTemplate
+from pydantic import BaseModel, Field
 
 
 def determine_winner(initial_scores: List[Decision], final_scores: List[Decision]) -> str:
@@ -116,6 +119,63 @@ def user_node(state: DebateState):
     return state
 
 
+class AudienceMemberDecisionOutput(BaseModel):
+    decision: str = Field(description="Decision: either 'agree' or 'disagree'.")
+
+
+class DebaterDecisionOutput(BaseModel):
+    arguments: str = Field(description="Arguments")
+
+
+# def user_node(state: DebateState):
+#     name = "Robert Smith"
+#     experience = "Retired librarian "
+#     description = "A retired librarian with a lifelong passion for literature, she now delights in quiet days immersed in books and sharing her wealth of knowledge with the community."
+#
+#     prompt = PromptTemplate(
+#         template="""
+#             You are a proposal debater who has actively participated in a debate on the following topic:
+#             {topic}
+#
+#             Debate Transcripts:
+#             {transcripts}
+#
+#             Your personal profile:
+#             - Name: {name}
+#             - Interests: {description}
+#             - Work Experience: {experience}
+#
+#             Do not use terms, which you probably should not know.
+#
+#             Your goal is to create argument that convinces the audience of your position.
+#         """,
+#         input_variables=["name", "description", "experience", "topic", "transcripts"]
+#     )
+#
+#     chain = prompt | gpt_4o_mini.with_structured_output(DebaterDecisionOutput)
+#     result = chain.invoke({
+#         "name": name,
+#         "description": description,
+#         "experience": experience,
+#         "topic": state["topic"],
+#         "transcripts": state["transcript"]
+#     })
+#
+#     state["round"] += 1
+#     state["transcript"] += [
+#         {
+#             "speaker": {
+#                 "name": name,
+#                 "experience": experience,
+#                 "description": description
+#             },
+#             "team_role": TeamRole.USER,
+#             "text": result.arguments
+#         }
+#     ]
+#
+#     return state
+
 def get_transcripts_by_role(transcript: List[Transcript], role: TeamRole) -> List[Transcript]:
     return [t for t in transcript if t["team_role"] == role]
 
@@ -153,17 +213,17 @@ def next_round(state: DebateState):
 def create_debate():
     workflow = StateGraph(DebateState)
     workflow.add_node("audience_init", audience_init_node)
-    workflow.add_node("pro_team", user_node)
-    # workflow.add_node("pro_team", create_team_node("proposing_members", TeamRole.PROPOSING))
+    # workflow.add_node("pro_team", user_node)
+    workflow.add_node("pro_team", create_team_node("proposing_members", TeamRole.PROPOSING))
     workflow.add_node("opp_team", create_team_node("opposing_members", TeamRole.OPPOSING))
     workflow.add_node("audience_final", audience_final_node)
-    workflow.add_node("tutor_node", tutor_node)
+    # workflow.add_node("tutor_node", tutor_node)
 
     workflow.add_edge(START, "audience_init")
     workflow.add_edge("audience_init", first_team)
     workflow.add_edge(first_team, second_team)
     workflow.add_conditional_edges(second_team, next_round, [first_team, "audience_final"])
-    workflow.add_edge("audience_final", "tutor_node")
-    workflow.add_edge("tutor_node", END)
+    # workflow.add_edge("audience_final", "tutor_node")
+    workflow.add_edge("audience_final", END)
 
     return workflow

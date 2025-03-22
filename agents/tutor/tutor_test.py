@@ -485,11 +485,10 @@ tutor_state: TutorState = {
             }
           ],
     },
-    "factual_analysis": {},
-    "logical_structure": {},
-    "logical_fallacies": {},
-    "emotional_appeal": {},
-    "style_clarity": {},
+    "relevance_analysis": {},
+    "evidence_support_analysis": {},
+    "emotional_appeal_analysis": {},
+    "style_clarity_analysis": {},
     "complex_feedback": {}
 }
 
